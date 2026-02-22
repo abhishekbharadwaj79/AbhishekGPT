@@ -1,12 +1,21 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from typing import List
 
 
 class Settings(BaseSettings):
     anthropic_api_key: str = ""
-    cors_origins: List[str] = ["http://localhost:3000"]
+    cors_origins: str = "http://localhost:3000"
     host: str = "0.0.0.0"
     port: int = 8000
+
+    @field_validator("cors_origins")
+    @classmethod
+    def parse_cors_origins(cls, v: str) -> str:
+        return v
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",")]
 
     class Config:
         env_file = ".env"
