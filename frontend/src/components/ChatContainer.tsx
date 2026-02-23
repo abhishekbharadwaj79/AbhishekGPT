@@ -46,6 +46,7 @@ export function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,11 +56,18 @@ export function ChatContainer() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const handleNewChat = useCallback(() => {
-    if (!isStreaming) {
-      setMessages([]);
+  const handleStop = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
-  }, [isStreaming]);
+    setIsStreaming(false);
+  }, []);
+
+  const handleNewChat = useCallback(() => {
+    handleStop();
+    setMessages([]);
+  }, [handleStop]);
 
   const handleSend = useCallback(
     async (content: string) => {
@@ -112,7 +120,7 @@ export function ChatContainer() {
         content: m.content,
       }));
 
-      await streamChat(
+      const controller = streamChat(
         allMessages,
         (chunk) => {
           setMessages((prev) => {
@@ -125,7 +133,10 @@ export function ChatContainer() {
             return updated;
           });
         },
-        () => setIsStreaming(false),
+        () => {
+          setIsStreaming(false);
+          abortControllerRef.current = null;
+        },
         (error) => {
           console.error("Chat error:", error);
           setMessages((prev) => {
@@ -138,8 +149,11 @@ export function ChatContainer() {
             return updated;
           });
           setIsStreaming(false);
+          abortControllerRef.current = null;
         }
       );
+
+      abortControllerRef.current = controller;
     },
     [messages]
   );
@@ -153,7 +167,12 @@ export function ChatContainer() {
           messagesEndRef={messagesEndRef}
           onSuggestionClick={handleSend}
         />
-        <ChatInput onSend={handleSend} disabled={isStreaming} />
+        <ChatInput
+          onSend={handleSend}
+          onStop={handleStop}
+          disabled={isStreaming}
+          isStreaming={isStreaming}
+        />
       </main>
     </>
   );
