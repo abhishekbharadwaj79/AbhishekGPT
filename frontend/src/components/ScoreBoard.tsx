@@ -6,6 +6,20 @@ function GameCard({ game }: { game: Game }) {
   const isLive = game.status === "In Progress";
   const isFinal = game.status === "Final";
 
+  const gameDate = game.start_time
+    ? new Date(game.start_time).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      })
+    : "";
+  const gameTime = game.start_time
+    ? new Date(game.start_time).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "";
+
   return (
     <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 hover:border-gray-600 transition-colors">
       <div className="flex items-center justify-between mb-3">
@@ -20,6 +34,11 @@ function GameCard({ game }: { game: Game }) {
         >
           {isLive ? "LIVE" : game.status}
         </span>
+        {gameDate && (
+          <span className="text-xs text-gray-500">
+            {gameDate}{!isLive && !isFinal ? ` · ${gameTime}` : ""}
+          </span>
+        )}
       </div>
 
       <div className="space-y-3">
