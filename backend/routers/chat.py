@@ -56,9 +56,8 @@ def detect_sports(text: str) -> list[str]:
         if any(kw in text_lower for kw in keywords):
             detected.append(sport)
 
-    # If asking about scores but no specific sport detected, fetch major sports
-    if not detected:
-        detected = ["nfl", "nba", "mlb", "nhl"]
+    # Only return detected sports, don't default to US sports
+    return detected
 
     return detected
 

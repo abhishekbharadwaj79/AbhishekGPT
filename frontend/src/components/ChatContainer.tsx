@@ -38,7 +38,7 @@ function detectSports(text: string): string[] {
       detected.push(sport);
     }
   }
-  return detected.length > 0 ? detected : ["nba", "nfl", "mlb", "nhl"];
+  return detected;
 }
 
 export function ChatContainer() {
