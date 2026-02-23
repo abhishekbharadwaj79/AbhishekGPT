@@ -40,7 +40,7 @@ export function MessageList({
             <button
               key={suggestion}
               onClick={() => onSuggestionClick(suggestion)}
-              className="text-left px-4 py-3 rounded-xl border border-gray-700 hover:border-green-500 hover:bg-gray-800 transition-colors text-sm text-gray-300"
+              className="text-left px-4 py-3 rounded-xl border border-gray-700 hover:border-green-500 hover:bg-gray-800/60 transition-colors text-sm text-gray-300"
             >
               {suggestion}
             </button>
@@ -51,13 +51,13 @@ export function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="flex-1 overflow-y-auto">
+      <div className="divide-y divide-gray-800">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
-        <div ref={messagesEndRef} />
       </div>
+      <div ref={messagesEndRef} />
     </div>
   );
 }

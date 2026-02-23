@@ -1,3 +1,5 @@
+"use client";
+
 import ReactMarkdown from "react-markdown";
 import { Message } from "@/types";
 
@@ -5,26 +7,31 @@ export function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
-      {!isUser && (
-        <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center text-sm font-bold mr-3 mt-1 flex-shrink-0">
-          S
+    <div className={`py-6 ${isUser ? "" : "bg-gray-800/50"}`}>
+      <div className="max-w-3xl mx-auto px-4 flex gap-4">
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
+            isUser
+              ? "bg-blue-600 text-white"
+              : "bg-green-600 text-white"
+          }`}
+        >
+          {isUser ? "U" : "S"}
         </div>
-      )}
-      <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-          isUser
-            ? "bg-green-600 text-white"
-            : "bg-gray-800 text-gray-100"
-        }`}
-      >
-        {isUser ? (
-          <p className="whitespace-pre-wrap">{message.content}</p>
-        ) : (
-          <div className="prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
-        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-400 mb-1.5">
+            {isUser ? "You" : "SportsGPT"}
+          </p>
+          {isUser ? (
+            <p className="text-gray-100 whitespace-pre-wrap leading-relaxed">
+              {message.content}
+            </p>
+          ) : (
+            <div className="markdown-body">
+              <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
