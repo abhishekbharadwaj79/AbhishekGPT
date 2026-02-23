@@ -31,6 +31,8 @@ function GameCard({ game }: { game: Game }) {
                 src={game.away_logo}
                 alt={game.away_team}
                 className="w-8 h-8 object-contain"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
               />
             ) : (
               <div className="w-8 h-8 rounded bg-gray-700 flex items-center justify-center text-xs font-bold">
@@ -60,6 +62,8 @@ function GameCard({ game }: { game: Game }) {
                 src={game.home_logo}
                 alt={game.home_team}
                 className="w-8 h-8 object-contain"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
               />
             ) : (
               <div className="w-8 h-8 rounded bg-gray-700 flex items-center justify-center text-xs font-bold">
