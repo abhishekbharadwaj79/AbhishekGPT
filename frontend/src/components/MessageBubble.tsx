@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import { Message } from "@/types";
+import { ScoreBoard } from "./ScoreBoard";
 
 export function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -27,9 +28,14 @@ export function MessageBubble({ message }: { message: Message }) {
               {message.content}
             </p>
           ) : (
-            <div className="markdown-body">
-              <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
-            </div>
+            <>
+              {message.scores && message.scores.length > 0 && (
+                <ScoreBoard data={message.scores} />
+              )}
+              <div className="markdown-body">
+                <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
+              </div>
+            </>
           )}
         </div>
       </div>

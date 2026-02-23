@@ -40,9 +40,15 @@ async def get_live_scores(sport: str) -> dict[str, Any]:
             "name": event.get("name", ""),
             "status": event.get("status", {}).get("type", {}).get("description", ""),
             "home_team": home["team"]["displayName"],
+            "home_abbreviation": home["team"].get("abbreviation", ""),
             "home_score": home.get("score", "0"),
+            "home_logo": home["team"].get("logo", ""),
+            "home_color": home["team"].get("color", ""),
             "away_team": away["team"]["displayName"],
+            "away_abbreviation": away["team"].get("abbreviation", ""),
             "away_score": away.get("score", "0"),
+            "away_logo": away["team"].get("logo", ""),
+            "away_color": away["team"].get("color", ""),
             "start_time": event.get("date", ""),
         })
 

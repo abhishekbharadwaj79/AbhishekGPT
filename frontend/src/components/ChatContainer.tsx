@@ -1,10 +1,38 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Message } from "@/types";
-import { streamChat } from "@/lib/api";
+import { Message, ScoresResponse } from "@/types";
+import { streamChat, fetchScores } from "@/lib/api";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
+
+const SCORE_KEYWORDS = [
+  "score", "scores", "game", "games", "playing", "play today",
+  "who won", "who's winning", "result", "results", "live",
+  "today", "tonight",
+];
+
+const SPORT_KEYWORDS: Record<string, string[]> = {
+  nfl: ["nfl", "football", "super bowl"],
+  nba: ["nba", "basketball"],
+  mlb: ["mlb", "baseball"],
+  nhl: ["nhl", "hockey"],
+  soccer: ["soccer", "premier league", "epl"],
+};
+
+function detectSports(text: string): string[] {
+  const lower = text.toLowerCase();
+  const isScoreQuery = SCORE_KEYWORDS.some((kw) => lower.includes(kw));
+  if (!isScoreQuery) return [];
+
+  const detected: string[] = [];
+  for (const [sport, keywords] of Object.entries(SPORT_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) {
+      detected.push(sport);
+    }
+  }
+  return detected.length > 0 ? detected : ["nba", "nfl", "mlb", "nhl"];
+}
 
 export function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,6 +65,33 @@ export function ChatContainer() {
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
       setIsStreaming(true);
+
+      // Fetch live scores if the user is asking about scores
+      const sports = detectSports(content);
+      if (sports.length > 0) {
+        const scoresResults: ScoresResponse[] = [];
+        await Promise.all(
+          sports.map(async (sport) => {
+            try {
+              const data = await fetchScores(sport);
+              if (data && data.games) {
+                scoresResults.push(data);
+              }
+            } catch {
+              // silently skip failed fetches
+            }
+          })
+        );
+
+        if (scoresResults.length > 0) {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            updated[updated.length - 1] = { ...last, scores: scoresResults };
+            return updated;
+          });
+        }
+      }
 
       const allMessages = [...messages, userMessage].map((m) => ({
         role: m.role,
