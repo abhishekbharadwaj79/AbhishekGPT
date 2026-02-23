@@ -1,8 +1,39 @@
 "use client";
 
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Copy, Check } from "lucide-react";
 import { Message } from "@/types";
 import { ScoreBoard } from "./ScoreBoard";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-700 transition-colors"
+    >
+      {copied ? (
+        <>
+          <Check size={14} />
+          Copied
+        </>
+      ) : (
+        <>
+          <Copy size={14} />
+          Copy
+        </>
+      )}
+    </button>
+  );
+}
 
 export function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -35,6 +66,11 @@ export function MessageBubble({ message }: { message: Message }) {
               <div className="markdown-body">
                 <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
               </div>
+              {message.content && (
+                <div className="mt-2">
+                  <CopyButton text={message.content} />
+                </div>
+              )}
             </>
           )}
         </div>
