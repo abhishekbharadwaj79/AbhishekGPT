@@ -10,6 +10,14 @@ SPORT_ENDPOINTS = {
     "soccer": "soccer/eng.1",
     "ncaaf": "football/college-football",
     "ncaab": "basketball/mens-college-basketball",
+    "cricket": "cricket/8676",
+    "ipl": "cricket/8048",
+    "bbl": "cricket/8044",
+    "psl": "cricket/10886",
+    "cpl": "cricket/10889",
+    "the_hundred": "cricket/10890",
+    "sa20": "cricket/12344",
+    "county": "cricket/8052",
 }
 
 BASE_URL = "https://site.api.espn.com/apis/site/v2/sports"

@@ -27,6 +27,14 @@ SPORT_KEYWORDS: dict[str, list[str]] = {
     "soccer": ["soccer", "football", "premier league", "epl", "goal", "messi", "ronaldo", "fifa"],
     "ncaaf": ["college football", "ncaaf", "cfb"],
     "ncaab": ["college basketball", "ncaab", "march madness"],
+    "cricket": ["cricket", "test match", "odi", "t20", "wicket", "batsman", "bowler", "innings"],
+    "ipl": ["ipl", "indian premier league"],
+    "bbl": ["bbl", "big bash"],
+    "psl": ["psl", "pakistan super league"],
+    "cpl": ["cpl", "caribbean premier league"],
+    "the_hundred": ["the hundred", "hundred cricket"],
+    "sa20": ["sa20"],
+    "county": ["county cricket", "county championship"],
 }
 
 

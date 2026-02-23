@@ -18,6 +18,13 @@ const SPORT_KEYWORDS: Record<string, string[]> = {
   mlb: ["mlb", "baseball"],
   nhl: ["nhl", "hockey"],
   soccer: ["soccer", "premier league", "epl"],
+  cricket: ["cricket", "test match", "odi", "t20", "wicket"],
+  ipl: ["ipl", "indian premier league"],
+  bbl: ["bbl", "big bash"],
+  psl: ["psl", "pakistan super league"],
+  cpl: ["cpl", "caribbean premier league"],
+  the_hundred: ["the hundred"],
+  sa20: ["sa20"],
 };
 
 function detectSports(text: string): string[] {
