@@ -1,24 +1,51 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Game, ScoresResponse } from "@/types";
+
+function formatGameDate(isoDate: string): string {
+  try {
+    const d = new Date(isoDate);
+    return d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
+function formatGameTime(isoDate: string): string {
+  try {
+    const d = new Date(isoDate);
+    return d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
 
 function GameCard({ game }: { game: Game }) {
   const isLive = game.status === "In Progress";
   const isFinal = game.status === "Final";
 
-  const gameDate = game.start_time
-    ? new Date(game.start_time).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      })
-    : "";
-  const gameTime = game.start_time
-    ? new Date(game.start_time).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "";
+  // Use state to avoid SSR hydration mismatch with locale-dependent formatting
+  const [dateStr, setDateStr] = useState("");
+
+  useEffect(() => {
+    if (game.start_time) {
+      const date = formatGameDate(game.start_time);
+      const time = formatGameTime(game.start_time);
+      if (!isLive && !isFinal && time) {
+        setDateStr(`${date} · ${time}`);
+      } else {
+        setDateStr(date);
+      }
+    }
+  }, [game.start_time, isLive, isFinal]);
 
   return (
     <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 hover:border-gray-600 transition-colors">
@@ -34,10 +61,8 @@ function GameCard({ game }: { game: Game }) {
         >
           {isLive ? "LIVE" : game.status}
         </span>
-        {gameDate && (
-          <span className="text-xs text-gray-500">
-            {gameDate}{!isLive && !isFinal ? ` · ${gameTime}` : ""}
-          </span>
+        {dateStr && (
+          <span className="text-xs text-gray-400">{dateStr}</span>
         )}
       </div>
 

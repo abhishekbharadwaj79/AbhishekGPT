@@ -59,8 +59,6 @@ def detect_sports(text: str) -> list[str]:
     # Only return detected sports, don't default to US sports
     return detected
 
-    return detected
-
 
 def format_scores_context(scores_data: list[dict]) -> str:
     """Format scores data into a readable context string for the AI."""
