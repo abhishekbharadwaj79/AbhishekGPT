@@ -1,6 +1,6 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sse_starlette.sse import EventSourceResponse
 
 from services.claude_service import stream_chat_response
 
@@ -23,6 +23,6 @@ async def chat(request: ChatRequest):
 
     async def event_generator():
         async for chunk in stream_chat_response(messages):
-            yield {"data": chunk}
+            yield chunk
 
-    return EventSourceResponse(event_generator())
+    return StreamingResponse(event_generator(), media_type="text/plain")

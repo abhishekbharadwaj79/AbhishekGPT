@@ -27,15 +27,8 @@ export async function streamChat(
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       const text = decoder.decode(value, { stream: true });
-      const lines = text.split("\n");
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = line.slice(6);
-          if (data) onChunk(data);
-        }
-      }
+      onChunk(text);
     }
     onDone();
   } catch (error) {
