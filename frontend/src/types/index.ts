@@ -14,12 +14,15 @@ export interface Game {
   home_score: string;
   home_logo: string;
   home_color: string;
+  home_innings?: string[];
   away_team: string;
   away_abbreviation: string;
   away_score: string;
   away_logo: string;
   away_color: string;
+  away_innings?: string[];
   start_time: string;
+  is_cricket?: boolean;
 }
 
 export interface ScoresResponse {
