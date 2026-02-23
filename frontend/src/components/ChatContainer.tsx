@@ -5,6 +5,7 @@ import { Message, ScoresResponse } from "@/types";
 import { streamChat, fetchScores } from "@/lib/api";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
+import { Header } from "./Header";
 
 const SCORE_KEYWORDS = [
   "score", "scores", "game", "games", "playing", "play today",
@@ -53,6 +54,12 @@ export function ChatContainer() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  const handleNewChat = useCallback(() => {
+    if (!isStreaming) {
+      setMessages([]);
+    }
+  }, [isStreaming]);
 
   const handleSend = useCallback(
     async (content: string) => {
@@ -138,13 +145,16 @@ export function ChatContainer() {
   );
 
   return (
-    <main className="flex-1 flex flex-col overflow-hidden">
-      <MessageList
-        messages={messages}
-        messagesEndRef={messagesEndRef}
-        onSuggestionClick={handleSend}
-      />
-      <ChatInput onSend={handleSend} disabled={isStreaming} />
-    </main>
+    <>
+      <Header onNewChat={handleNewChat} showNewChat={messages.length > 0} />
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <MessageList
+          messages={messages}
+          messagesEndRef={messagesEndRef}
+          onSuggestionClick={handleSend}
+        />
+        <ChatInput onSend={handleSend} disabled={isStreaming} />
+      </main>
+    </>
   );
 }
