@@ -13,7 +13,7 @@ export function MessageBubble({ message }: { message: Message }) {
           className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
             isUser
               ? "bg-blue-600 text-white"
-              : "bg-green-600 text-white"
+              : "bg-blue-600 text-white"
           }`}
         >
           {isUser ? "U" : "S"}

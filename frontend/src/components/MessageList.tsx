@@ -25,7 +25,7 @@ export function MessageList({
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-4">
-        <div className="w-16 h-16 rounded-2xl bg-green-600 flex items-center justify-center text-3xl font-bold mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-3xl font-bold mb-6">
           S
         </div>
         <h2 className="text-2xl font-bold text-gray-100 mb-2">
@@ -40,7 +40,7 @@ export function MessageList({
             <button
               key={suggestion}
               onClick={() => onSuggestionClick(suggestion)}
-              className="text-left px-4 py-3 rounded-xl border border-gray-700 hover:border-green-500 hover:bg-gray-800/60 transition-colors text-sm text-gray-300"
+              className="text-left px-4 py-3 rounded-xl border border-gray-700 hover:border-blue-500 hover:bg-gray-800/60 transition-colors text-sm text-gray-300"
             >
               {suggestion}
             </button>
