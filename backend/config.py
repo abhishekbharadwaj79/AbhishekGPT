@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     host: str = "0.0.0.0"
     port: int = 8000
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
 
     @field_validator("cors_origins")
     @classmethod

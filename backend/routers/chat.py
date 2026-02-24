@@ -1,9 +1,12 @@
+from typing import Optional
+
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from services.claude_service import stream_chat_response
 from services.sports_service import get_live_scores
+from services.db_service import save_message, update_conversation_title
 
 
 router = APIRouter()
@@ -16,6 +19,7 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message]
+    conversation_id: Optional[str] = None
 
 
 # Map keywords to sport identifiers
@@ -43,7 +47,6 @@ def detect_sports(text: str) -> list[str]:
     text_lower = text.lower()
     detected = []
 
-    # Check for generic score-related queries
     score_keywords = ["score", "scores", "game", "games", "playing", "play today",
                       "who won", "who's winning", "result", "results", "live",
                       "today", "tonight", "yesterday", "this week", "standings"]
@@ -56,7 +59,6 @@ def detect_sports(text: str) -> list[str]:
         if any(kw in text_lower for kw in keywords):
             detected.append(sport)
 
-    # Only return detected sports, don't default to US sports
     return detected
 
 
@@ -85,11 +87,12 @@ def format_scores_context(scores_data: list[dict]) -> str:
 @router.post("/chat")
 async def chat(request: ChatRequest):
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
+    conversation_id = request.conversation_id
 
     # Check if the latest user message is asking about scores/games
     scores_context = ""
+    latest_user_msg = ""
     if messages:
-        latest_user_msg = ""
         for msg in reversed(messages):
             if msg["role"] == "user":
                 latest_user_msg = msg["content"]
@@ -109,8 +112,29 @@ async def chat(request: ChatRequest):
             if scores_results:
                 scores_context = format_scores_context(scores_results)
 
+    # Collect the full response for saving to DB
+    full_response = []
+
     async def event_generator():
         async for chunk in stream_chat_response(messages, scores_context):
+            full_response.append(chunk)
             yield chunk
+
+        # Save messages to DB after streaming completes
+        if conversation_id:
+            try:
+                # Save the user message
+                await save_message(conversation_id, "user", latest_user_msg)
+                # Save the assistant response
+                assistant_content = "".join(full_response)
+                await save_message(conversation_id, "assistant", assistant_content)
+                # Auto-title: if this is the first message, use it as title
+                msgs = messages
+                user_messages = [m for m in msgs if m["role"] == "user"]
+                if len(user_messages) == 1:
+                    title = latest_user_msg[:80]
+                    await update_conversation_title(conversation_id, title)
+            except Exception:
+                pass  # Don't fail the response if DB save fails
 
     return StreamingResponse(event_generator(), media_type="text/plain")

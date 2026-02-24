@@ -1,9 +1,12 @@
+"use client";
+
 import { ChatContainer } from "@/components/ChatContainer";
+import { AuthGuard } from "@/components/AuthGuard";
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-screen">
+    <AuthGuard>
       <ChatContainer />
-    </div>
+    </AuthGuard>
   );
 }

@@ -2,10 +2,18 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Message, ScoresResponse } from "@/types";
-import { streamChat, fetchScores } from "@/lib/api";
+import {
+  streamChat,
+  fetchScores,
+  fetchConversations,
+  createConversation,
+  deleteConversation,
+  fetchMessages,
+} from "@/lib/api";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { Header } from "./Header";
+import { Sidebar } from "./Sidebar";
 
 const SCORE_KEYWORDS = [
   "score", "scores", "game", "games", "playing", "play today",
@@ -42,11 +50,34 @@ function detectSports(text: string): string[] {
   return detected;
 }
 
+interface ConversationItem {
+  id: string;
+  title: string;
+  updated_at: string;
+}
+
 export function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Load conversations on mount
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const loadConversations = async () => {
+    try {
+      const convs = await fetchConversations();
+      setConversations(convs);
+    } catch {
+      // silently fail if backend isn't ready
+    }
+  };
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,10 +98,60 @@ export function ChatContainer() {
   const handleNewChat = useCallback(() => {
     handleStop();
     setMessages([]);
+    setCurrentConversationId(null);
   }, [handleStop]);
+
+  const handleSelectConversation = useCallback(
+    async (conversationId: string) => {
+      handleStop();
+      setCurrentConversationId(conversationId);
+      try {
+        const msgs = await fetchMessages(conversationId);
+        setMessages(
+          msgs.map((m: { id: string; role: string; content: string; created_at: string }) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            timestamp: new Date(m.created_at),
+          }))
+        );
+      } catch {
+        setMessages([]);
+      }
+    },
+    [handleStop]
+  );
+
+  const handleDeleteConversation = useCallback(
+    async (conversationId: string) => {
+      try {
+        await deleteConversation(conversationId);
+        setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+        if (currentConversationId === conversationId) {
+          setMessages([]);
+          setCurrentConversationId(null);
+        }
+      } catch {
+        // ignore
+      }
+    },
+    [currentConversationId]
+  );
 
   const handleSend = useCallback(
     async (content: string) => {
+      // Create conversation if this is the first message
+      let convId = currentConversationId;
+      if (!convId) {
+        try {
+          const conv = await createConversation();
+          convId = conv.id;
+          setCurrentConversationId(convId);
+        } catch {
+          // continue without persistence
+        }
+      }
+
       const userMessage: Message = {
         id: crypto.randomUUID(),
         role: "user",
@@ -100,7 +181,7 @@ export function ChatContainer() {
                 scoresResults.push(data);
               }
             } catch {
-              // silently skip failed fetches
+              // silently skip
             }
           })
         );
@@ -136,6 +217,8 @@ export function ChatContainer() {
         () => {
           setIsStreaming(false);
           abortControllerRef.current = null;
+          // Refresh conversation list to show new/updated conversation
+          loadConversations();
         },
         (error) => {
           console.error("Chat error:", error);
@@ -150,30 +233,46 @@ export function ChatContainer() {
           });
           setIsStreaming(false);
           abortControllerRef.current = null;
-        }
+        },
+        convId || undefined
       );
 
       abortControllerRef.current = controller;
     },
-    [messages]
+    [messages, currentConversationId]
   );
 
   return (
-    <>
-      <Header onNewChat={handleNewChat} showNewChat={messages.length > 0} />
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <MessageList
-          messages={messages}
-          messagesEndRef={messagesEndRef}
-          onSuggestionClick={handleSend}
+    <div className="flex h-screen">
+      <Sidebar
+        conversations={conversations}
+        currentConversationId={currentConversationId}
+        onSelectConversation={handleSelectConversation}
+        onNewChat={handleNewChat}
+        onDeleteConversation={handleDeleteConversation}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header
+          onNewChat={handleNewChat}
+          showNewChat={messages.length > 0}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
         />
-        <ChatInput
-          onSend={handleSend}
-          onStop={handleStop}
-          disabled={isStreaming}
-          isStreaming={isStreaming}
-        />
-      </main>
-    </>
+        <main className="flex-1 flex flex-col overflow-hidden">
+          <MessageList
+            messages={messages}
+            messagesEndRef={messagesEndRef}
+            onSuggestionClick={handleSend}
+          />
+          <ChatInput
+            onSend={handleSend}
+            onStop={handleStop}
+            disabled={isStreaming}
+            isStreaming={isStreaming}
+          />
+        </main>
+      </div>
+    </div>
   );
 }
