@@ -61,7 +61,7 @@ async def stream_chat_response(
                 len(messages), len(scores_context), len(search_context))
 
     response = _get_client().models.generate_content_stream(
-        model="gemini-2.0-flash-001",
+        model="gemini-3-flash",
         contents=gemini_contents,
         config={
             "system_instruction": system_prompt,
