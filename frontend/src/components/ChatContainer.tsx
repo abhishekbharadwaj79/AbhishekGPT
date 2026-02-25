@@ -225,7 +225,7 @@ export function ChatContainer() {
           setIsStreaming(false);
           abortControllerRef.current = null;
           // Refresh conversation list to show new/updated conversation
-          loadConversations();
+          if (user) loadConversations();
         },
         (error) => {
           console.error("Chat error:", error);
