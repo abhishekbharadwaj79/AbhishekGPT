@@ -25,6 +25,7 @@ def _get_client():
 async def stream_chat_response(
     messages: list[dict],
     scores_context: str = "",
+    search_context: str = "",
 ) -> AsyncGenerator[str, None]:
     """Stream a response from Gemini, constrained to sports topics."""
     today = date.today().strftime("%B %d, %Y")
@@ -40,14 +41,24 @@ async def stream_chat_response(
             "--- END LIVE SCORES DATA ---"
         )
 
+    if search_context:
+        system_prompt += (
+            "\n\n--- WEB SEARCH RESULTS ---\n"
+            "The following are recent web search results relevant to the user's question. "
+            "Use this information to provide accurate, up-to-date answers. "
+            "Cite specific facts from these results.\n"
+            f"{search_context}\n"
+            "--- END WEB SEARCH RESULTS ---"
+        )
+
     # Convert messages to Gemini format
     gemini_contents = []
     for msg in messages:
         role = "user" if msg["role"] == "user" else "model"
         gemini_contents.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-    logger.info("Calling Gemini 2.0 Flash with %d messages, scores_context=%d chars",
-                len(messages), len(scores_context))
+    logger.info("Calling Gemini 2.0 Flash with %d messages, scores=%d chars, search=%d chars",
+                len(messages), len(scores_context), len(search_context))
 
     response = _get_client().models.generate_content_stream(
         model="gemini-2.0-flash",

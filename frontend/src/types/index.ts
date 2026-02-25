@@ -29,3 +29,11 @@ export interface ScoresResponse {
   sport: string;
   games: Game[];
 }
+
+export interface NewsArticle {
+  title: string;
+  summary: string;
+  link: string;
+  image: string;
+  published: string;
+}

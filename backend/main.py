@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from routers import chat, scores, conversations
+from routers import chat, scores, conversations, news
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api")
 app.include_router(scores.router, prefix="/api")
 app.include_router(conversations.router, prefix="/api")
+app.include_router(news.router, prefix="/api")
 
 logger.info("SportsGPT API started. CORS origins: %s", settings.cors_origins_list)
 

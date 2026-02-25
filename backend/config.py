@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     port: int = 8000
     supabase_url: str = ""
     supabase_service_role_key: str = ""
+    tavily_api_key: str = ""
 
     @field_validator("cors_origins")
     @classmethod

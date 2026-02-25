@@ -115,3 +115,10 @@ export async function fetchMessages(conversationId: string) {
   const data = await response.json();
   return data.messages;
 }
+
+export async function fetchTrendingNews() {
+  const response = await fetch(`${API_URL}/api/news`);
+  if (!response.ok) throw new Error(`Server error: ${response.status}`);
+  const data = await response.json();
+  return data.articles;
+}

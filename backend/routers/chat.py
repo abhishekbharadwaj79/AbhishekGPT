@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from services.claude_service import stream_chat_response
 from services.sports_service import get_live_scores
+from services.search_service import web_search
 from services.db_service import save_message, update_conversation_title
 
 
@@ -116,11 +117,20 @@ async def chat(request: ChatRequest):
         if scores_results:
             scores_context = format_scores_context(scores_results)
 
+    # Web search for current events / recent info
+    search_context = ""
+    SEARCH_KEYWORDS = ["who won", "latest", "recent", "current", "news", "trade",
+                       "injury", "update", "transfer", "rumor", "champion", "winner",
+                       "standings", "ranking", "draft", "signing", "contract",
+                       "fired", "hired", "coach", "manager", "2025", "2026"]
+    if any(kw in latest_user_msg.lower() for kw in SEARCH_KEYWORDS):
+        search_context = await web_search(latest_user_msg)
+
     full_response = []
 
     async def event_generator():
         try:
-            async for chunk in stream_chat_response(messages, scores_context):
+            async for chunk in stream_chat_response(messages, scores_context, search_context):
                 full_response.append(chunk)
                 yield chunk
             logger.info("Gemini response complete, %d chars", len("".join(full_response)))
