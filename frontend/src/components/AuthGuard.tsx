@@ -24,22 +24,28 @@ export function useAuth() {
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setLoading(false);
+      });
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+      });
+
+      return () => subscription.unsubscribe();
+    } catch (err) {
+      setError((err as Error).message);
       setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const signOut = async () => {
@@ -52,6 +58,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
+        <p className="text-red-400 text-sm mb-2">Configuration Error</p>
+        <p className="text-gray-400 text-xs max-w-md">{error}</p>
       </div>
     );
   }
