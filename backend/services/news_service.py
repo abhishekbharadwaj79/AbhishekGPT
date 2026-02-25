@@ -2,7 +2,11 @@ import logging
 from typing import Any
 
 import httpx
-import feedparser
+
+try:
+    import feedparser
+except ImportError:
+    feedparser = None  # type: ignore
 
 
 logger = logging.getLogger("sportsgpt.news")
@@ -18,6 +22,10 @@ ESPN_RSS_FEEDS = {
 
 async def get_trending_news(count: int = 4) -> list[dict[str, Any]]:
     """Fetch trending sports headlines from ESPN RSS."""
+    if feedparser is None:
+        logger.warning("feedparser not installed, news disabled")
+        return []
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(ESPN_RSS_FEEDS["top"])

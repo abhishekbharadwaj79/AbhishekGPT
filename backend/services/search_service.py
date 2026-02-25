@@ -1,5 +1,4 @@
 import logging
-from tavily import TavilyClient
 
 from config import settings
 
@@ -12,7 +11,11 @@ _client = None
 def _get_client():
     global _client
     if _client is None and settings.tavily_api_key:
-        _client = TavilyClient(api_key=settings.tavily_api_key)
+        try:
+            from tavily import TavilyClient
+            _client = TavilyClient(api_key=settings.tavily_api_key)
+        except ImportError:
+            logger.warning("tavily-python not installed, web search disabled")
     return _client
 
 
