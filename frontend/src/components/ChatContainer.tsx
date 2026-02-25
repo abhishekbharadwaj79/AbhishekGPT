@@ -14,6 +14,7 @@ import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { useAuth } from "./AuthGuard";
 
 const SCORE_KEYWORDS = [
   "score", "scores", "game", "games", "playing", "play today",
@@ -57,6 +58,7 @@ interface ConversationItem {
 }
 
 export function ChatContainer() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -65,10 +67,15 @@ export function ChatContainer() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Load conversations on mount
+  // Load conversations when user signs in
   useEffect(() => {
-    loadConversations();
-  }, []);
+    if (user) {
+      loadConversations();
+    } else {
+      setConversations([]);
+      setCurrentConversationId(null);
+    }
+  }, [user]);
 
   const loadConversations = async () => {
     try {
@@ -140,9 +147,9 @@ export function ChatContainer() {
 
   const handleSend = useCallback(
     async (content: string) => {
-      // Create conversation if this is the first message
+      // Create conversation if user is signed in and this is the first message
       let convId = currentConversationId;
-      if (!convId) {
+      if (!convId && user) {
         try {
           const conv = await createConversation();
           convId = conv.id;
@@ -244,15 +251,17 @@ export function ChatContainer() {
 
   return (
     <div className="flex h-screen">
-      <Sidebar
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onSelectConversation={handleSelectConversation}
-        onNewChat={handleNewChat}
-        onDeleteConversation={handleDeleteConversation}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {user && (
+        <Sidebar
+          conversations={conversations}
+          currentConversationId={currentConversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewChat={handleNewChat}
+          onDeleteConversation={handleDeleteConversation}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
       <div className="flex-1 flex flex-col min-w-0">
         <Header
           onNewChat={handleNewChat}

@@ -3,17 +3,20 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
-import { LoginPage } from "./LoginPage";
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
+  loading: boolean;
+  signIn: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   session: null,
+  loading: true,
+  signIn: async () => {},
   signOut: async () => {},
 });
 
@@ -24,7 +27,6 @@ export function useAuth() {
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -42,42 +44,44 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       });
 
       return () => subscription.unsubscribe();
-    } catch (err) {
-      setError((err as Error).message);
+    } catch {
       setLoading(false);
     }
   }, []);
 
-  const signOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    setSession(null);
+  const signIn = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+    } catch {
+      // ignore
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
-        <p className="text-red-400 text-sm mb-2">Configuration Error</p>
-        <p className="text-gray-400 text-xs max-w-md">{error}</p>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <LoginPage />;
-  }
+  const signOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      setSession(null);
+    } catch {
+      // ignore
+    }
+  };
 
   return (
     <AuthContext.Provider
-      value={{ user: session.user, session, signOut }}
+      value={{
+        user: session?.user ?? null,
+        session,
+        loading,
+        signIn,
+        signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>
