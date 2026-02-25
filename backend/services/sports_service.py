@@ -107,4 +107,8 @@ async def get_live_scores(sport: str) -> dict[str, Any]:
 
         games.append(game_data)
 
+    # Sort: live games first, then scheduled, then completed
+    STATUS_ORDER = {"In Progress": 0, "Halftime": 0, "Scheduled": 1, "Final": 2, "Result": 2}
+    games.sort(key=lambda g: (STATUS_ORDER.get(g["status"], 1), g.get("start_time", "")))
+
     return {"sport": sport, "games": games}
