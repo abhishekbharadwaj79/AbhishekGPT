@@ -65,10 +65,11 @@ export function Header({ onNewChat, showNewChat, onToggleSidebar }: HeaderProps)
               )}
               <button
                 onClick={signOut}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
                 title="Sign out"
               >
-                <LogOut size={16} />
+                <LogOut size={14} />
+                <span className="hidden sm:inline">Sign out</span>
               </button>
             </div>
           ) : (
