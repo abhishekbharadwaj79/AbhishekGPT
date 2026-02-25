@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from typing import AsyncGenerator
 
@@ -7,12 +8,16 @@ from config import settings
 from prompts.system_prompt import SPORTS_SYSTEM_PROMPT
 
 
+logger = logging.getLogger("sportsgpt.gemini")
+
+
 _client = None
 
 
 def _get_client():
     global _client
     if _client is None:
+        logger.info("Initializing Gemini client")
         _client = genai.Client(api_key=settings.gemini_api_key)
     return _client
 
@@ -40,6 +45,9 @@ async def stream_chat_response(
     for msg in messages:
         role = "user" if msg["role"] == "user" else "model"
         gemini_contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+
+    logger.info("Calling Gemini 2.0 Flash with %d messages, scores_context=%d chars",
+                len(messages), len(scores_context))
 
     response = _get_client().models.generate_content_stream(
         model="gemini-2.0-flash",

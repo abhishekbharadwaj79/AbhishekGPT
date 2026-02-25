@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 from fastapi import APIRouter
@@ -9,6 +10,7 @@ from services.sports_service import get_live_scores
 from services.db_service import save_message, update_conversation_title
 
 
+logger = logging.getLogger("sportsgpt.chat")
 router = APIRouter()
 
 
@@ -43,7 +45,6 @@ SPORT_KEYWORDS: dict[str, list[str]] = {
 
 
 def detect_sports(text: str) -> list[str]:
-    """Detect which sports the user might be asking about."""
     text_lower = text.lower()
     detected = []
 
@@ -63,7 +64,6 @@ def detect_sports(text: str) -> list[str]:
 
 
 def format_scores_context(scores_data: list[dict]) -> str:
-    """Format scores data into a readable context string for the AI."""
     parts = []
     for data in scores_data:
         sport = data.get("sport", "").upper()
@@ -89,7 +89,6 @@ async def chat(request: ChatRequest):
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
     conversation_id = request.conversation_id
 
-    # Check if the latest user message is asking about scores/games
     scores_context = ""
     latest_user_msg = ""
     if messages:
@@ -98,43 +97,48 @@ async def chat(request: ChatRequest):
                 latest_user_msg = msg["content"]
                 break
 
-        sports = detect_sports(latest_user_msg)
-        if sports:
-            scores_results = []
-            for sport in sports:
-                try:
-                    result = await get_live_scores(sport)
-                    if "error" not in result:
-                        scores_results.append(result)
-                except Exception:
-                    pass
+    logger.info("Chat request: conv=%s, msg_count=%d, user_msg='%s'",
+                conversation_id or "none", len(messages), latest_user_msg[:100])
 
-            if scores_results:
-                scores_context = format_scores_context(scores_results)
+    sports = detect_sports(latest_user_msg)
+    if sports:
+        logger.info("Detected sports: %s", sports)
+        scores_results = []
+        for sport in sports:
+            try:
+                result = await get_live_scores(sport)
+                if "error" not in result:
+                    scores_results.append(result)
+                    logger.info("Fetched %d games for %s", len(result.get("games", [])), sport)
+            except Exception as e:
+                logger.warning("Failed to fetch scores for %s: %s", sport, e)
 
-    # Collect the full response for saving to DB
+        if scores_results:
+            scores_context = format_scores_context(scores_results)
+
     full_response = []
 
     async def event_generator():
-        async for chunk in stream_chat_response(messages, scores_context):
-            full_response.append(chunk)
-            yield chunk
+        try:
+            async for chunk in stream_chat_response(messages, scores_context):
+                full_response.append(chunk)
+                yield chunk
+            logger.info("Gemini response complete, %d chars", len("".join(full_response)))
+        except Exception as e:
+            logger.error("Gemini streaming error: %s", e, exc_info=True)
+            yield f"Error generating response: {e}"
 
-        # Save messages to DB after streaming completes
         if conversation_id:
             try:
-                # Save the user message
                 await save_message(conversation_id, "user", latest_user_msg)
-                # Save the assistant response
                 assistant_content = "".join(full_response)
                 await save_message(conversation_id, "assistant", assistant_content)
-                # Auto-title: if this is the first message, use it as title
-                msgs = messages
-                user_messages = [m for m in msgs if m["role"] == "user"]
+                user_messages = [m for m in messages if m["role"] == "user"]
                 if len(user_messages) == 1:
                     title = latest_user_msg[:80]
                     await update_conversation_title(conversation_id, title)
-            except Exception:
-                pass  # Don't fail the response if DB save fails
+                logger.info("Saved messages to conv=%s", conversation_id)
+            except Exception as e:
+                logger.error("Failed to save messages to DB: %s", e, exc_info=True)
 
     return StreamingResponse(event_generator(), media_type="text/plain")

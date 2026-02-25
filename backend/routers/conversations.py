@@ -1,3 +1,5 @@
+import logging
+
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -11,6 +13,7 @@ from services.db_service import (
 )
 
 
+logger = logging.getLogger("sportsgpt.conversations")
 router = APIRouter()
 
 
@@ -29,8 +32,10 @@ async def get_current_user(request: Request) -> str:
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
+        logger.info("Authenticated user: %s", user_id[:8])
         return user_id
     except jwt.DecodeError:
+        logger.warning("Invalid JWT token received")
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
