@@ -1,4 +1,5 @@
 import anthropic
+from datetime import date
 from typing import AsyncGenerator
 
 from config import settings
@@ -13,7 +14,8 @@ async def stream_chat_response(
     scores_context: str = "",
 ) -> AsyncGenerator[str, None]:
     """Stream a response from Claude, constrained to sports topics."""
-    system_prompt = SPORTS_SYSTEM_PROMPT
+    today = date.today().strftime("%B %d, %Y")
+    system_prompt = f"Today's date is {today}.\n\n{SPORTS_SYSTEM_PROMPT}"
 
     if scores_context:
         system_prompt += (
